@@ -1,0 +1,99 @@
+using System;
+using System.IO;
+
+class ParentalControl
+{
+    static void Main()
+    {
+        // Chemin vers le fichier hosts
+        string hostsFilePath = @"C:\Windows\System32\drivers\etc\hosts";
+
+        // Liste des sites Web à bloquer
+        string[] blockedSites = { "www.facebook.com", "www.twitter.com", "www.instagram.com" };
+
+        Console.WriteLine("Bienvenue dans l'application de contrôle parental.");
+
+        // Demande à l'utilisateur de spécifier si les sites Web doivent être bloqués ou débloqués
+        Console.WriteLine("Voulez-vous bloquer ou débloquer les sites Web ? (B/D)");
+        string input = Console.ReadLine();
+
+        // Vérifier la réponse de l'utilisateur
+        bool blockSites = false;
+        if (input.ToUpper() == "B")
+        {
+            blockSites = true;
+        }
+        else if (input.ToUpper() == "D")
+        {
+            blockSites = false;
+        }
+        else
+        {
+            Console.WriteLine("Réponse invalide. L'application se fermera.");
+            return;
+        }
+
+        // Bloquer ou débloquer les sites Web
+        try
+        {
+            // Lire le contenu actuel du fichier hosts
+            string[] lines = File.ReadAllLines(hostsFilePath);
+
+            // Parcourir les sites Web bloqués
+            foreach (string site in blockedSites)
+            {
+                // Vérifier si le site est déjà présent dans le fichier hosts
+                bool siteFound = false;
+                foreach (string line in lines)
+                {
+                    if (line.Contains(site))
+                    {
+                        siteFound = true;
+                        break;
+                    }
+                }
+
+                // Ajouter ou supprimer le site en fonction de la demande de l'utilisateur
+                if (blockSites)
+                {
+                    if (!siteFound)
+                    {
+                        // Ajouter une entrée pour bloquer le site
+                        string entry = "127.0.0.1 " + site;
+                        File.AppendAllText(hostsFilePath, Environment.NewLine + entry);
+                        Console.WriteLine("Le site Web " + site + " a été bloqué.");
+                    }
+                }
+                else
+                {
+                    if (siteFound)
+                    {
+                        // Supprimer l'entrée pour débloquer le site
+                        string[] updatedLines = new string[lines.Length - 1];
+                        int index = 0;
+                        foreach (string line in lines)
+                        {
+                            if (!line.Contains(site))
+                            {
+                                updatedLines[index] = line;
+                                index++;
+                            }
+                        }
+                        File.WriteAllLines(hostsFilePath, updatedLines);
+                        Console.WriteLine("Le site Web " + site + " a été débloqué.");
+                    }
+                }
+            }
+
+            Console.WriteLine("Opération terminée.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Console.WriteLine("Accès refusé. Exécutez l'application en tant qu'administrateur.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Une erreur s'est produite : " + ex.Message);
+        }
+    }
+}
